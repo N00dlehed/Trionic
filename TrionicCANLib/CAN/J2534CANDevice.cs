@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Runtime.InteropServices;
 using NLog;
@@ -101,8 +102,10 @@ namespace TrionicCANLib.CAN
         public void readMessages()
         {
             uint id;
-            int numMsgs = 1;
+            int numMsgs;
             const int timeout = 1000;
+            const int minReadMs = 10;
+            Stopwatch readTimer = new Stopwatch();
             CANMessage canMessage = new CANMessage();
             logger.Debug("readMessages started");
             while (true)
@@ -116,10 +119,19 @@ namespace TrionicCANLib.CAN
                     }
                 }
                 IntPtr rxMsgs = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PassThruMsg)));
+                // The driver overwrites numMsgs with the number of messages read (0 on an empty read),
+                // so it must be reset before every call or later reads would request zero messages
+                numMsgs = 1;
+                bool noData = false;
+                readTimer.Restart();
                 m_status = passThru.PassThruReadMsgs(m_channelId, rxMsgs, ref numMsgs, timeout);
                 if (m_status == J2534Err.STATUS_NOERROR)
                 {
-                    if (numMsgs > 0)
+                    if (numMsgs <= 0)
+                    {
+                        noData = true;
+                    }
+                    else
                     {
                         PassThruMsg msg = rxMsgs.AsMsgList(numMsgs)[0];
 
@@ -139,11 +151,24 @@ namespace TrionicCANLib.CAN
                         }
                     }
                 }
+                else if (m_status == J2534Err.ERR_TIMEOUT || m_status == J2534Err.ERR_BUFFER_EMPTY)
+                {
+                    // Normal empty read, nothing to report
+                    noData = true;
+                }
                 else
                 {
                     logger.Debug(String.Format("PassThruReadMsgs, status:{0}", m_status));
+                    noData = true;
                 }
                 Marshal.FreeHGlobal(rxMsgs);
+
+                // Some drivers return immediately instead of waiting for the timeout when there is
+                // no data (or on an error), don't let the thread spin
+                if (noData && readTimer.ElapsedMilliseconds < minReadMs)
+                {
+                    Thread.Sleep(5);
+                }
             }
         }
 
