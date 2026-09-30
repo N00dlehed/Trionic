@@ -49,6 +49,7 @@
             this.cbUseLastPointer = new System.Windows.Forms.CheckBox();
             this.cbVerifyChecksum = new System.Windows.Forms.CheckBox();
             this.cbFaster = new System.Windows.Forms.CheckBox();
+            this.cbIgnitionPrompts = new System.Windows.Forms.CheckBox();
             this.InterframeLabel = new System.Windows.Forms.Label();
             this.cbxInterFrame = new System.Windows.Forms.ComboBox();
             this.cbRemember = new System.Windows.Forms.CheckBox();
@@ -280,6 +281,18 @@
             this.cbFaster.Text = "Skip certain delays";
             this.cbFaster.UseVisualStyleBackColor = true;
             // 
+            // cbIgnitionPrompts
+            // 
+            this.cbIgnitionPrompts.AutoSize = true;
+            this.cbIgnitionPrompts.Checked = true;
+            this.cbIgnitionPrompts.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbIgnitionPrompts.Location = new System.Drawing.Point(194, 235);
+            this.cbIgnitionPrompts.Name = "cbIgnitionPrompts";
+            this.cbIgnitionPrompts.Size = new System.Drawing.Size(120, 17);
+            this.cbIgnitionPrompts.TabIndex = 89;
+            this.cbIgnitionPrompts.Text = "Show ignition prompts";
+            this.cbIgnitionPrompts.UseVisualStyleBackColor = true;
+            // 
             // InterframeLabel
             // 
             this.InterframeLabel.AutoSize = true;
@@ -340,6 +353,7 @@
             this.Controls.Add(this.InterframeLabel);
             this.Controls.Add(this.cbxInterFrame);
             this.Controls.Add(this.cbFaster);
+            this.Controls.Add(this.cbIgnitionPrompts);
             this.Controls.Add(this.cbVerifyChecksum);
             this.Controls.Add(this.cbUseLastPointer);
             this.Controls.Add(this.bntDiscard);
@@ -394,6 +408,7 @@
         private System.Windows.Forms.CheckBox cbUseLastPointer;
         private System.Windows.Forms.CheckBox cbVerifyChecksum;
         private System.Windows.Forms.CheckBox cbFaster;
+        private System.Windows.Forms.CheckBox cbIgnitionPrompts;
         private System.Windows.Forms.Label InterframeLabel;
         private System.Windows.Forms.ComboBox cbxInterFrame;
         private System.Windows.Forms.CheckBox cbRemember;

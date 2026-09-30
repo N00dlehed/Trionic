@@ -23,6 +23,7 @@ namespace TrionicCANFlasher
         private int  m_height = -1;
 
         private bool m_enablelog = true;  // "Enable logging"
+        private bool m_ignprompt = true;  // "Show ignition prompts"
         private bool m_onlypbus  = true;  // "Only P-Bus connection"
         private bool m_onbflash  = true;  // "Use flasher on device" (CombiAdapter)
         private bool m_uselegion = true;  // "Use Legion bootloader"
@@ -244,6 +245,12 @@ namespace TrionicCANFlasher
             set { m_enablelog = value; }
         }
 
+        public bool IgnitionPrompts
+        {
+            get { return m_ignprompt;  }
+            set { m_ignprompt = value; }
+        }
+
         public bool UseLegion
         {
             get { return m_uselegion;  }
@@ -309,6 +316,7 @@ namespace TrionicCANFlasher
 
             cbOnlyPBus.Checked = m_onlypbus;
             cbEnableLogging.Checked = m_enablelog;
+            cbIgnitionPrompts.Checked = m_ignprompt;
             cbUseLegion.Checked = m_uselegion;
             cbOnboardFlasher.Checked = m_onbflash;
 
@@ -365,6 +373,7 @@ namespace TrionicCANFlasher
 
             m_onlypbus = cbOnlyPBus.Checked;
             m_enablelog = cbEnableLogging.Checked;
+            m_ignprompt = cbIgnitionPrompts.Checked;
             m_uselegion = cbUseLegion.Checked;
             m_onbflash = cbOnboardFlasher.Checked;
 
@@ -433,6 +442,10 @@ namespace TrionicCANFlasher
                             else if (a == "EnableLogging")
                             {
                                 m_enablelog = Convert.ToBoolean(Settings.GetValue(a).ToString());
+                            }
+                            else if (a == "IgnitionPrompts")
+                            {
+                                m_ignprompt = Convert.ToBoolean(Settings.GetValue(a).ToString());
                             }
                             else if (a == "OnboardFlasher")
                             {
@@ -597,6 +610,7 @@ namespace TrionicCANFlasher
             SaveRegistrySetting("ECU", SelectedECU.Name ?? String.Empty);
 
             SaveRegistrySetting("EnableLogging", m_enablelog);
+            SaveRegistrySetting("IgnitionPrompts", m_ignprompt);
             SaveRegistrySetting("OnboardFlasher", m_onbflash);
             SaveRegistrySetting("OnlyPBus", m_onlypbus);
             SaveRegistrySetting("UseLegionBootloader", m_uselegion);
