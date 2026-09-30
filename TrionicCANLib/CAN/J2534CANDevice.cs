@@ -147,13 +147,15 @@ namespace TrionicCANLib.CAN
                             shortFrameCount++;
                             if (shortFrameCount <= 3 || shortFrameCount % 100 == 0)
                             {
-                                logger.Warn(String.Format("PassThruReadMsgs, skipped short frame #{0}, DataSize:{1}", shortFrameCount, msg.DataSize));
+                                logger.Warn(String.Format("PassThruReadMsgs, skipped short frame #{0}, RxStatus:{1:X}, DataSize:{2}", shortFrameCount, msg.RxStatus, msg.DataSize));
                             }
                         }
                         else
                         {
                             byte[] all = msg.GetBytes();
                             id = (uint)(all[2] * 0x100 + all[3]);
+                            // Diagnostic: log every received frame, no filtering on RxStatus
+                            logger.Debug(String.Format("rx frame: RxStatus:{0:X} id:{1:X3} DataSize:{2}", msg.RxStatus, id, msg.DataSize));
                             uint length = msg.DataSize - 4;
                             byte[] data = new byte[length];
                             Array.Copy(all, 4, data, 0, length);
