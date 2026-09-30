@@ -106,6 +106,7 @@ namespace TrionicCANLib.CAN
             const int timeout = 1000;
             const int minReadMs = 10;
             Stopwatch readTimer = new Stopwatch();
+            int shortFrameCount = 0;
             CANMessage canMessage = new CANMessage();
             logger.Debug("readMessages started");
             while (true)
@@ -133,21 +134,38 @@ namespace TrionicCANLib.CAN
                     }
                     else
                     {
+                        if (numMsgs > 1)
+                        {
+                            logger.Warn(String.Format("PassThruReadMsgs returned {0} messages, only the first is processed", numMsgs));
+                        }
                         PassThruMsg msg = rxMsgs.AsMsgList(numMsgs)[0];
 
-                        byte[] all = msg.GetBytes();
-                        id = (uint)(all[2] * 0x100 + all[3]);
-                        uint length = msg.DataSize-4;
-                        byte[] data = new byte[length];
-                        Array.Copy(all, 4, data, 0, length);
-                        
-                        if (acceptMessageId(id))
+                        if (msg.DataSize < 4)
                         {
-                            canMessage.setID(id);
-                            canMessage.setTimeStamp(msg.Timestamp);
-                            canMessage.setCanData(data, (byte)(length));
+                            // Too short to hold the 4 byte CAN id header. Log the first three
+                            // occurrences and then every 100th to avoid flooding the log.
+                            shortFrameCount++;
+                            if (shortFrameCount <= 3 || shortFrameCount % 100 == 0)
+                            {
+                                logger.Warn(String.Format("PassThruReadMsgs, skipped short frame #{0}, DataSize:{1}", shortFrameCount, msg.DataSize));
+                            }
+                        }
+                        else
+                        {
+                            byte[] all = msg.GetBytes();
+                            id = (uint)(all[2] * 0x100 + all[3]);
+                            uint length = msg.DataSize - 4;
+                            byte[] data = new byte[length];
+                            Array.Copy(all, 4, data, 0, length);
 
-                            receivedMessage(canMessage);
+                            if (acceptMessageId(id))
+                            {
+                                canMessage.setID(id);
+                                canMessage.setTimeStamp(msg.Timestamp);
+                                canMessage.setCanData(data, (byte)(length));
+
+                                receivedMessage(canMessage);
+                            }
                         }
                     }
                 }
