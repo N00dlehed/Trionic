@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Runtime.InteropServices;
 using NLog;
@@ -105,7 +104,7 @@ namespace TrionicCANLib.CAN
             int numMsgs;
             const int timeout = 1000;
             const int minReadMs = 10;
-            Stopwatch readTimer = new Stopwatch();
+            System.Diagnostics.Stopwatch readTimer = new System.Diagnostics.Stopwatch();
             int shortFrameCount = 0;
             CANMessage canMessage = new CANMessage();
             logger.Debug("readMessages started");
