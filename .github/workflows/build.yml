@@ -2,7 +2,7 @@ name: Build (Windows x86)
 
 on:
   push:
-    branches: [ master, 'claude/**' ]
+    branches: [ master ]
   pull_request:
   workflow_dispatch:
 
