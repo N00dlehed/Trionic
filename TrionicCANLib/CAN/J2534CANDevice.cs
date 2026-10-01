@@ -135,7 +135,7 @@ namespace TrionicCANLib.CAN
                     {
                         if (numMsgs > 1)
                         {
-                            logger.Warn(String.Format("PassThruReadMsgs returned {0} messages, only the first is processed", numMsgs));
+                            logger.Debug(String.Format("PassThruReadMsgs returned {0} messages, only the first is processed", numMsgs));
                         }
                         PassThruMsg msg = rxMsgs.AsMsgList(numMsgs)[0];
 
@@ -146,7 +146,7 @@ namespace TrionicCANLib.CAN
                             shortFrameCount++;
                             if (shortFrameCount <= 3 || shortFrameCount % 100 == 0)
                             {
-                                logger.Warn(String.Format("PassThruReadMsgs, skipped short frame #{0}, RxStatus:{1:X}, DataSize:{2}", shortFrameCount, msg.RxStatus, msg.DataSize));
+                                logger.Debug(String.Format("PassThruReadMsgs, skipped short frame #{0}, RxStatus:{1:X}, DataSize:{2}", shortFrameCount, msg.RxStatus, msg.DataSize));
                             }
                         }
                         else
