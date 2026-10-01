@@ -311,7 +311,7 @@ namespace TrionicCANFlasher
 
             catch (Exception ex)
             {
-                logger.Debug(ex.Message);
+                logger.Debug(ex.ToString());
             }
 
             cbOnlyPBus.Checked = m_onlypbus;
@@ -368,7 +368,7 @@ namespace TrionicCANFlasher
 
             catch (Exception ex)
             {
-                logger.Debug(ex.Message);
+                logger.Debug(ex.ToString());
             }
 
             m_onlypbus = cbOnlyPBus.Checked;
@@ -406,7 +406,7 @@ namespace TrionicCANFlasher
 
                 catch (Exception ex)
                 {
-                    logger.Debug(ex.Message);
+                    logger.Debug(ex.ToString());
                 }
             }
 
@@ -515,7 +515,7 @@ namespace TrionicCANFlasher
 
                         catch (Exception ex)
                         {
-                            logger.Debug(ex.Message);
+                            logger.Debug(ex.ToString());
                         }
                     }
                 }
@@ -544,7 +544,7 @@ namespace TrionicCANFlasher
 
             catch (Exception ex)
             {
-                logger.Debug(ex.Message);
+                logger.Debug(ex.ToString());
             }
 
             /////////////////////////////////////////////
@@ -656,7 +656,7 @@ namespace TrionicCANFlasher
                 }
                 catch (Exception ex)
                 {
-                    logger.Debug(ex.Message);
+                    logger.Debug(ex.ToString());
                 }
             }
         }

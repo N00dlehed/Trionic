@@ -72,7 +72,7 @@ namespace TrionicCANFlasher
 
                 catch (Exception ex)
                 {
-                    logger.Debug(ex.Message);
+                    logger.Debug(ex.ToString());
                 }
             }
 
