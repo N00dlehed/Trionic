@@ -597,7 +597,10 @@ namespace TrionicCANLib.API
                 CANMessage response = new CANMessage();
                 ulong data = 0;
                 int timeout = timeoutP2ct;
-                while (!_success && msgcnt < 2)
+                int blankCount = 0;
+                const int maxBlankWaits = 10;
+                // Give up if the ECU stays silent, otherwise this loop never ends and freezes the UI
+                while (!_success && msgcnt < 2 && blankCount < maxBlankWaits)
                 {
                     response = new CANMessage();
                     response = m_canListener.waitMessage(timeout);
@@ -611,6 +614,7 @@ namespace TrionicCANLib.API
                     else if (data == 0)
                     {
                         logger.Debug("Received blank message while waiting for data");
+                        blankCount++;
                     }
                     else if (response.getCanData(1) != 0x7E)
                     {
@@ -807,7 +811,10 @@ namespace TrionicCANLib.API
                 CANMessage response = new CANMessage();
                 ulong data = 0;
                 int timeout = timeoutP2ct;
-                while (!_success && msgcnt < 2)
+                int blankCount = 0;
+                const int maxBlankWaits = 10;
+                // Give up if the ECU stays silent, otherwise this loop never ends and freezes the UI
+                while (!_success && msgcnt < 2 && blankCount < maxBlankWaits)
                 {
                     response = new CANMessage();
                     response = m_canListener.waitMessage(timeout);
@@ -821,6 +828,7 @@ namespace TrionicCANLib.API
                     else if (data == 0)
                     {
                         logger.Debug("Received blank message while waiting for data");
+                        blankCount++;
                     }
                     else if (response.getCanData(1) != 0x7E)
                     {

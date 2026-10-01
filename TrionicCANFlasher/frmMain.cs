@@ -72,7 +72,7 @@ namespace TrionicCANFlasher
 
                 catch (Exception ex)
                 {
-                    logger.Debug(ex.Message);
+                    logger.Debug(ex.ToString());
                 }
             }
 
@@ -345,6 +345,40 @@ namespace TrionicCANFlasher
             bgworkerLogCanData.RunWorkerAsync();
         }
 
+        // Ignition (+15) prompts. The adapter cannot switch ignition, so the user does it.
+        // Only used for ME9.6 and can be turned off in Settings.
+        private bool m_ignitionPromptShown = false;
+
+        // Returns false if the user cancelled, in which case the operation must be aborted
+        private bool PromptIgnitionOn()
+        {
+            m_ignitionPromptShown = false;
+            if (!AppSettings.IgnitionPrompts || cbxEcuType.SelectedIndex != (int)ECU.MOTRONIC96)
+            {
+                return true;
+            }
+
+            DialogResult result = MessageBox.Show("Turn ignition (+15) ON, then click OK.\r\n\r\nClick Cancel to abort.",
+                "Ignition", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1);
+            if (result != DialogResult.OK)
+            {
+                return false;
+            }
+            m_ignitionPromptShown = true;
+            return true;
+        }
+
+        private void PromptIgnitionOff()
+        {
+            if (!m_ignitionPromptShown)
+            {
+                return;
+            }
+            m_ignitionPromptShown = false;
+            MessageBox.Show("Operation finished. You can now turn ignition (+15) OFF.",
+                "Ignition", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
         void bgWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             if (e.Cancelled)
@@ -381,6 +415,7 @@ namespace TrionicCANFlasher
             }
             EnableUserInput(true);
             AddLogItem("Connection terminated");
+            PromptIgnitionOff();
         }
 
         public void UpdateLogManager()
@@ -1051,6 +1086,10 @@ namespace TrionicCANFlasher
 
         private void btnReadECU_Click(object sender, EventArgs e)
         {
+            if (!PromptIgnitionOn())
+            {
+                return;
+            }
             using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Bin files|*.bin" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)
@@ -1176,6 +1215,7 @@ namespace TrionicCANFlasher
                                     trionic8.Cleanup();
                                     EnableUserInput(true);
                                     AddLogItem("Connection terminated");
+                                    PromptIgnitionOff();
                                 }
                             }
 
@@ -1269,6 +1309,10 @@ namespace TrionicCANFlasher
 
         private void btnGetEcuInfo_Click(object sender, EventArgs e)
         {
+            if (!PromptIgnitionOn())
+            {
+                return;
+            }
             SetViewMode(false);
             if (cbxEcuType.SelectedIndex == (int)ECU.TRIONIC5)
             {
@@ -1448,6 +1492,7 @@ namespace TrionicCANFlasher
                 EnableUserInput(true);
             }
             LogManager.Flush();
+            PromptIgnitionOff();
         }
 
         private void btnReadSRAM_Click(object sender, EventArgs e)
@@ -1590,6 +1635,10 @@ namespace TrionicCANFlasher
 
         private void btnReadDTC_Click(object sender, EventArgs e)
         {
+            if (!PromptIgnitionOn())
+            {
+                return;
+            }
             SetViewMode(false);
             if (cbxEcuType.SelectedIndex == (int)ECU.TRIONIC7)
             {
@@ -1652,6 +1701,7 @@ namespace TrionicCANFlasher
                 EnableUserInput(true);
             }
             LogManager.Flush();
+            PromptIgnitionOff();
         }
 
         private void btnEditParameters_Click(object sender, EventArgs e)

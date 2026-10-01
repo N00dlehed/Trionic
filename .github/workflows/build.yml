@@ -1,0 +1,44 @@
+name: Build (Windows x86)
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - uses: nuget/setup-nuget@v2
+
+      - name: Restore NuGet packages
+        shell: pwsh
+        run: |
+          nuget restore TrionicCANLib/packages.config -SolutionDirectory .
+          nuget restore TrionicCANFlasher/packages.config -SolutionDirectory .
+
+      # The projects target .NET Framework 4.0, whose reference assemblies are not
+      # installed on the runner. Fetch them from NuGet and point MSBuild at them so the
+      # project files do not have to be retargeted.
+      - name: Get .NET 4.0 reference assemblies
+        shell: pwsh
+        run: |
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net40 -Version 1.0.3 -OutputDirectory refs
+          $refPath = (Resolve-Path "refs/Microsoft.NETFramework.ReferenceAssemblies.net40.1.0.3/build/.NETFramework/v4.0").Path
+          "FRAMEWORK_PATH_OVERRIDE=$refPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      # Only the flasher project is built (it pulls in TrionicCANLib). The solution also
+      # contains installer projects (WiX/vdproj) that cannot be built here.
+      - name: Build TrionicCANFlasher (Release, x86)
+        run: msbuild TrionicCANFlasher/TrionicCANFlasher.csproj /p:Configuration=Release /p:Platform=x86 /p:FrameworkPathOverride="$env:FRAMEWORK_PATH_OVERRIDE" /v:minimal
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TrionicCANFlasher-x86-Release
+          path: TrionicCANFlasher/bin/x86/Release/
+          if-no-files-found: error

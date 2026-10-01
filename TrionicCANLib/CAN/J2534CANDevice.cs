@@ -101,8 +101,11 @@ namespace TrionicCANLib.CAN
         public void readMessages()
         {
             uint id;
-            int numMsgs = 1;
+            int numMsgs;
             const int timeout = 1000;
+            const int minReadMs = 10;
+            System.Diagnostics.Stopwatch readTimer = new System.Diagnostics.Stopwatch();
+            int shortFrameCount = 0;
             CANMessage canMessage = new CANMessage();
             logger.Debug("readMessages started");
             while (true)
@@ -116,34 +119,75 @@ namespace TrionicCANLib.CAN
                     }
                 }
                 IntPtr rxMsgs = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PassThruMsg)));
+                // The driver overwrites numMsgs with the number of messages read (0 on an empty read),
+                // so it must be reset before every call or later reads would request zero messages
+                numMsgs = 1;
+                bool noData = false;
+                readTimer.Restart();
                 m_status = passThru.PassThruReadMsgs(m_channelId, rxMsgs, ref numMsgs, timeout);
                 if (m_status == J2534Err.STATUS_NOERROR)
                 {
-                    if (numMsgs > 0)
+                    if (numMsgs <= 0)
                     {
+                        noData = true;
+                    }
+                    else
+                    {
+                        if (numMsgs > 1)
+                        {
+                            logger.Debug(String.Format("PassThruReadMsgs returned {0} messages, only the first is processed", numMsgs));
+                        }
                         PassThruMsg msg = rxMsgs.AsMsgList(numMsgs)[0];
 
-                        byte[] all = msg.GetBytes();
-                        id = (uint)(all[2] * 0x100 + all[3]);
-                        uint length = msg.DataSize-4;
-                        byte[] data = new byte[length];
-                        Array.Copy(all, 4, data, 0, length);
-                        
-                        if (acceptMessageId(id))
+                        if (msg.DataSize < 4)
                         {
-                            canMessage.setID(id);
-                            canMessage.setTimeStamp(msg.Timestamp);
-                            canMessage.setCanData(data, (byte)(length));
+                            // Too short to hold the 4 byte CAN id header. Log the first three
+                            // occurrences and then every 100th to avoid flooding the log.
+                            shortFrameCount++;
+                            if (shortFrameCount <= 3 || shortFrameCount % 100 == 0)
+                            {
+                                logger.Debug(String.Format("PassThruReadMsgs, skipped short frame #{0}, RxStatus:{1:X}, DataSize:{2}", shortFrameCount, msg.RxStatus, msg.DataSize));
+                            }
+                        }
+                        else
+                        {
+                            byte[] all = msg.GetBytes();
+                            id = (uint)(all[2] * 0x100 + all[3]);
+                            // Diagnostic: log every received frame, no filtering on RxStatus
+                            logger.Debug(String.Format("rx frame: RxStatus:{0:X} id:{1:X3} DataSize:{2}", msg.RxStatus, id, msg.DataSize));
+                            uint length = msg.DataSize - 4;
+                            byte[] data = new byte[length];
+                            Array.Copy(all, 4, data, 0, length);
 
-                            receivedMessage(canMessage);
+                            if (acceptMessageId(id))
+                            {
+                                canMessage.setID(id);
+                                canMessage.setTimeStamp(msg.Timestamp);
+                                canMessage.setCanData(data, (byte)(length));
+
+                                receivedMessage(canMessage);
+                            }
                         }
                     }
+                }
+                else if (m_status == J2534Err.ERR_TIMEOUT || m_status == J2534Err.ERR_BUFFER_EMPTY)
+                {
+                    // Normal empty read, nothing to report
+                    noData = true;
                 }
                 else
                 {
                     logger.Debug(String.Format("PassThruReadMsgs, status:{0}", m_status));
+                    noData = true;
                 }
                 Marshal.FreeHGlobal(rxMsgs);
+
+                // Some drivers return immediately instead of waiting for the timeout when there is
+                // no data (or on an error), don't let the thread spin
+                if (noData && readTimer.ElapsedMilliseconds < minReadMs)
+                {
+                    Thread.Sleep(5);
+                }
             }
         }
 
@@ -162,6 +206,7 @@ namespace TrionicCANLib.CAN
             m_status = passThru.PassThruOpen(IntPtr.Zero, ref m_deviceId);
             if (m_status != J2534Err.STATUS_NOERROR)
             {
+                logger.Debug(String.Format("open: PassThruOpen failed, status:{0}", m_status));
                 return OpenResult.OpenError;
             }
 
@@ -178,6 +223,7 @@ namespace TrionicCANLib.CAN
             }
             if (J2534Err.STATUS_NOERROR != m_status)
             {
+                logger.Debug(String.Format("open: PassThruConnect failed, status:{0}", m_status));
                 return OpenResult.OpenError;
             }
 
@@ -227,12 +273,14 @@ namespace TrionicCANLib.CAN
                 ref filterId);
             if (J2534Err.STATUS_NOERROR != m_status)
             {
+                logger.Debug(String.Format("open: PassThruStartMsgFilter failed, status:{0}", m_status));
                 return OpenResult.OpenError;
             }
 
             m_status = passThru.PassThruIoctl(m_channelId, (int)Ioctl.CLEAR_RX_BUFFER, IntPtr.Zero, IntPtr.Zero);
             if (J2534Err.STATUS_NOERROR != m_status)
             {
+                logger.Debug(String.Format("open: PassThruIoctl CLEAR_RX_BUFFER failed, status:{0}", m_status));
                 return OpenResult.OpenError;
             }
 
