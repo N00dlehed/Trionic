@@ -206,6 +206,7 @@ namespace TrionicCANLib.CAN
             m_status = passThru.PassThruOpen(IntPtr.Zero, ref m_deviceId);
             if (m_status != J2534Err.STATUS_NOERROR)
             {
+                logger.Debug(String.Format("open: PassThruOpen failed, status:{0}", m_status));
                 return OpenResult.OpenError;
             }
 
@@ -222,6 +223,7 @@ namespace TrionicCANLib.CAN
             }
             if (J2534Err.STATUS_NOERROR != m_status)
             {
+                logger.Debug(String.Format("open: PassThruConnect failed, status:{0}", m_status));
                 return OpenResult.OpenError;
             }
 
@@ -271,12 +273,14 @@ namespace TrionicCANLib.CAN
                 ref filterId);
             if (J2534Err.STATUS_NOERROR != m_status)
             {
+                logger.Debug(String.Format("open: PassThruStartMsgFilter failed, status:{0}", m_status));
                 return OpenResult.OpenError;
             }
 
             m_status = passThru.PassThruIoctl(m_channelId, (int)Ioctl.CLEAR_RX_BUFFER, IntPtr.Zero, IntPtr.Zero);
             if (J2534Err.STATUS_NOERROR != m_status)
             {
+                logger.Debug(String.Format("open: PassThruIoctl CLEAR_RX_BUFFER failed, status:{0}", m_status));
                 return OpenResult.OpenError;
             }
 
